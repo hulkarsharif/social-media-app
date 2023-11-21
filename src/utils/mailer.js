@@ -19,4 +19,16 @@ class Mailer {
             throw error;
         }
     };
+    sendActivationMail = async (emailAddress, token) => {
+        try {
+            this.send({
+                to: emailAddress,
+                subject: "Social Media App | Activate Your Account",
+                html: `<a  href="http://localhost:4040/users/activate?activationToken=${token}">Verify your email</a>`
+            });
+        } catch (error) {
+            throw error;
+        }
+    };
 }
+export const mailer = new Mailer();
