@@ -182,6 +182,42 @@ class UserService {
             }
         });
     };
+
+    getMe = async (userId) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+                id: true,
+                dateOfBirth: true,
+                education: true,
+                currentPlace: true,
+                workExperience: true
+            }
+        });
+
+        if (!user) {
+            throw new Error("User does not exist anymore", 404);
+        }
+        return user;
+    };
+
+    changePassword = async (newPassword, userId) => {
+        const hashedPassword = await bcrypt.hash(newPassword);
+
+        await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                password: hashedPassword
+            }
+        });
+    };
 }
 
 export const userService = new UserService();
