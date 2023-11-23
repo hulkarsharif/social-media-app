@@ -92,6 +92,15 @@ class UserController {
             message: "Password successfully updated!"
         });
     });
+
+    getMe = catchAsync(async (req, res) => {
+        const { userId } = req;
+        const me = await userService.getMe(userId);
+
+        res.status(200).json({
+            data: me
+        });
+    });
 }
 
 export const userController = new UserController();
