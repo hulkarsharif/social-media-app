@@ -12,17 +12,93 @@ enum AccountStatus {
     INACTIVE
 }
 
+type Education {
+    startYear Int
+    endYear   Int
+    school    String
+    degree    String
+    major     String
+}
+
+enum PostVisibility {
+    PUBLIC
+    PRIVATE
+    FRIENDS_ONLY
+}
+
+enum FrienshipStatus {
+    PENDING
+    ACCEPTED
+}
+
+enum PostStatus {
+    ARCHIVED
+    DRAFT
+}
+
+type Place {
+    city    String?
+    region  String?
+    country String
+}
+
+type WorkExperience {
+    startYear Int
+    endYear   Int
+    company   String
+    position  String
+}
+
 model User {
-    id                               String        @id @default(auto()) @map("_id") @db.ObjectId
-    email                            String        @unique
+    id                               String           @id @default(auto()) @map("_id") @db.ObjectId
+    email                            String           @unique
+    password                         String
     firstName                        String
     lastName                         String
-    password                         String
     dateOfBirth                      DateTime
-    status                           AccountStatus @default(INACTIVE)
+    currentPlace                     Place?
+    education                        Education[]
+    workExperience                   WorkExperience[]
+    posts                            Post[]
+    status                           AccountStatus    @default(INACTIVE)
     activationToken                  String?
     passwordResetToken               String?
     passwordResetTokenExpirationDate DateTime?
-    createdAt                        DateTime      @default(now())
-    updatedAt                        DateTime      @updatedAt
+    createdAt                        DateTime         @default(now())
+    updatedAt                        DateTime         @updatedAt
+}
+
+type Comment {
+    id        String
+    postId    String?  @db.ObjectId
+    userId    String?  @db.ObjectId
+    createdAt DateTime @default(now())
+}
+
+model Post {
+    id        String         @id @default(auto()) @map("_id") @db.ObjectId
+    content   String
+    comments  Comment[]
+    status    PostVisibility @default(PUBLIC)
+    createdAt DateTime       @default(now())
+    updatedAt DateTime       @updatedAt
+    userId    String?        @db.ObjectId
+    likeCount Int            @default(0)
+    User      User?          @relation(fields: [userId], references: [id])
+}
+
+model Like {
+    id       String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId   String?  @db.ObjectId
+    postId   String?  @db.ObjectId
+    likeTime DateTime @default(now())
+}
+
+model Friendship {
+    id        String          @id @default(auto()) @map("_id") @db.ObjectId
+    userAId   String          @db.ObjectId
+    userBId   String          @db.ObjectId
+    status    FrienshipStatus @default(PENDING)
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
 }

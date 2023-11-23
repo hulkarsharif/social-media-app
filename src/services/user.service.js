@@ -109,6 +109,140 @@ class UserService {
             }
         });
     };
+
+    forgotPassword = async (email) => {
+        const user = await prisma.user.findFirst({
+            where: {
+                email
+            },
+            select: {
+                id: true
+            }
+        });
+
+        if (!user) {
+            throw new CustomError(
+                "User does not exist with provided email",
+                404
+            );
+        }
+
+        const passwordResetToken = crypto.createToken();
+        const hashedPasswordResetToken = crypto.hash(passwordResetToken);
+
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                passwordResetToken: hashedPasswordResetToken,
+                passwordResetTokenExpirationDate: date.addMinutes(10)
+            }
+        });
+        await mailer.sendPasswordResetToken(email, passwordResetToken);
+    };
+
+    resetPassword = async (token, password) => {
+        const hashedPasswordResetToken = crypto.hash(token);
+
+        const user = await prisma.user.findFirst({
+            where: {
+                passwordResetToken: hashedPasswordResetToken
+            },
+            select: {
+                id: true,
+                passwordResetToken: true,
+                passwordResetTokenExpirationDate: true
+            }
+        });
+
+        if (!user) {
+            throw new CustomError(
+                "User does not exist with provided Password Reset Token",
+                404
+            );
+        }
+        const currentTime = new Date();
+        const takenExpDate = new Date(user.passwordResetTokenExpirationDate);
+
+        if (takenExpDate < currentTime) {
+            throw new CustomError(
+                "Password Reset Token Expired: Request a new one"
+            );
+        }
+
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                password: await bcrypt.hash(password),
+                passwordResetToken: null,
+                passwordResetTokenExpirationDate: null
+            }
+        });
+    };
+
+    getMe = async (userId) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+                id: true,
+                dateOfBirth: true,
+                education: true,
+                currentPlace: true,
+                workExperience: true
+            }
+        });
+
+        if (!user) {
+            throw new Error("User does not exist anymore", 404);
+        }
+        return user;
+    };
+
+    changePassword = async (newPassword, userId) => {
+        const hashedPassword = await bcrypt.hash(newPassword);
+
+        await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                password: hashedPassword
+            }
+        });
+    };
+
+    updateProfile = async (userInput, userId) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            select: {
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                email: true,
+                education: true,
+                workExperience: true
+            }
+        });
+        await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                ...user,
+                ...userInput
+            }
+        });
+    };
 }
 
 export const userService = new UserService();

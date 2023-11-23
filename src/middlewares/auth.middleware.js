@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { CustomError } from "../utils/custom-error.js";
+import { CustomError } from "../utils/custom.error.js";
 
 class AuthMiddleware {
     authenticate = (req, _, next) => {
@@ -26,19 +26,6 @@ class AuthMiddleware {
         } catch (error) {
             throw new CustomError(error.message, 500);
         }
-    };
-
-    isUser = (req, _, next) => {
-        const { userId } = req;
-
-        if (!userId) {
-            throw new CustomError(
-                "Forbidden: You are not authorized to perform this action",
-                403
-            );
-        }
-
-        next();
     };
 }
 

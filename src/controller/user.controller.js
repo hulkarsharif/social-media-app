@@ -1,6 +1,6 @@
 import { userService } from "../services/user.service.js";
 import { catchAsync } from "../utils/catch-async.js";
-// import { CustomError } from "../utils/custom.error.js";
+import { CustomError } from "../utils/custom.error.js";
 
 class UserController {
     signUp = catchAsync(async (req, res) => {
@@ -11,7 +11,10 @@ class UserController {
             firstName: body.firstName,
             lastName: body.lastName,
             dateOfBirth: body.dateOfBirth,
-            password: body.password
+            password: body.password,
+            currentPlace: body.currentPlace,
+            education: body.education,
+            workExperience: body.workExperience
         };
 
         await userService.signUp(userInput);
@@ -45,6 +48,107 @@ class UserController {
 
         res.status(200).json({
             message: "Success"
+        });
+    });
+
+    forgotPassword = catchAsync(async (req, res) => {
+        const {
+            body: { email }
+        } = req;
+
+        await userService.forgotPassword(email);
+
+        res.status(200).json({
+            message: "Password reset email has been sent"
+        });
+    });
+
+    resetPassword = catchAsync(async (req, res) => {
+        const {
+            body: { password, passwordConfirm },
+            headers
+        } = req;
+
+        if (!password || !passwordConfirm) {
+            throw new CustomError(
+                "Password and Password Confirm is required",
+                400
+            );
+        }
+        if (password !== passwordConfirm) {
+            throw new CustomError(
+                "Password and Password Confirm does not match",
+                400
+            );
+        }
+        if (!headers.authorization) {
+            throw new CustomError("Reset Token is missing", 400);
+        }
+
+        const [bearer, token] = headers.authorization.split(" ");
+
+        if (bearer !== "Bearer" || !token) {
+            throw new CustomError("Invalid Token", 400);
+        }
+        await userService.resetPassword(token, password);
+        res.status(200).json({
+            message: "Password successfully updated!"
+        });
+    });
+
+    getMe = catchAsync(async (req, res) => {
+        const { userId } = req;
+        const me = await userService.getMe(userId);
+
+        res.status(200).json({
+            data: me
+        });
+    });
+
+    changePassword = catchAsync(async (req, res) => {
+        const { newPassword, confirmNewPassword } = req.body;
+        if (!newPassword || !confirmNewPassword) {
+            throw new CustomError(
+                "All fields are required: New Password and New Password Confirmation",
+                400
+            );
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            throw new CustomError(
+                "New password and new password confirm does not match",
+                400
+            );
+        }
+        await userService.changePassword(newPassword, req.userId);
+        res.status(200).json({
+            message: "Password successfully updated"
+        });
+    });
+
+    updateProfile = catchAsync(async (req, res) => {
+        const {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            currentPlace,
+            education,
+            workExperience
+        } = req.body;
+
+        const userInput = {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            currentPlace,
+            education,
+            workExperience
+        };
+        await userService.updateProfile(userInput, req.userId);
+        res.status(200).json({
+            message: "Profile was updated successfully!"
         });
     });
 }
