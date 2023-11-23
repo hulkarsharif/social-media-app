@@ -11,7 +11,10 @@ class UserController {
             firstName: body.firstName,
             lastName: body.lastName,
             dateOfBirth: body.dateOfBirth,
-            password: body.password
+            password: body.password,
+            currentPlace: body.currentPlace,
+            education: body.education,
+            workExperience: body.workExperience
         };
 
         await userService.signUp(userInput);
