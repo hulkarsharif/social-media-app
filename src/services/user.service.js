@@ -109,6 +109,79 @@ class UserService {
             }
         });
     };
+
+    forgotPassword = async (email) => {
+        const user = await prisma.user.findFirst({
+            where: {
+                email
+            },
+            select: {
+                id: true
+            }
+        });
+
+        if (!user) {
+            throw new CustomError(
+                "User does not exist with provided email",
+                404
+            );
+        }
+
+        const passwordResetToken = crypto.createToken();
+        const hashedPasswordResetToken = crypto.hash(passwordResetToken);
+
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                passwordResetToken: hashedPasswordResetToken,
+                passwordResetTokenExpirationDate: date.addMinutes(10)
+            }
+        });
+        await mailer.sendPasswordResetToken(email, passwordResetToken);
+    };
+
+    resetPassword = async (token, password) => {
+        const hashedPasswordResetToken = crypto.hash(token);
+
+        const user = await prisma.user.findFirst({
+            where: {
+                passwordResetToken: hashedPasswordResetToken
+            },
+            select: {
+                id: true,
+                passwordResetToken: true,
+                passwordResetTokenExpirationDate: true
+            }
+        });
+
+        if (!user) {
+            throw new CustomError(
+                "User does not exist with provided Password Reset Token",
+                404
+            );
+        }
+        const currentTime = new Date();
+        const takenExpDate = new Date(user.passwordResetTokenExpirationDate);
+
+        if (takenExpDate < currentTime) {
+            throw new CustomError(
+                "Password Reset Token Expired: Request a new one"
+            );
+        }
+
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                password: await bcrypt.hash(password),
+                passwordResetToken: null,
+                passwordResetTokenExpirationDate: null
+            }
+        });
+    };
 }
 
 export const userService = new UserService();
