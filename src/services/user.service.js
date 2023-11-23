@@ -218,6 +218,31 @@ class UserService {
             }
         });
     };
+
+    updateProfile = async (userInput, userId) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            select: {
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                email: true,
+                education: true,
+                workExperience: true
+            }
+        });
+        await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                ...user,
+                ...userInput
+            }
+        });
+    };
 }
 
 export const userService = new UserService();

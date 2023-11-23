@@ -125,6 +125,32 @@ class UserController {
             message: "Password successfully updated"
         });
     });
+
+    updateProfile = catchAsync(async (req, res) => {
+        const {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            currentPlace,
+            education,
+            workExperience
+        } = req.body;
+
+        const userInput = {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            currentPlace,
+            education,
+            workExperience
+        };
+        await userService.updateProfile(userInput, req.userId);
+        res.status(200).json({
+            message: "Profile was updated successfully!"
+        });
+    });
 }
 
 export const userController = new UserController();
