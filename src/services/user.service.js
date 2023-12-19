@@ -25,6 +25,37 @@ class UserService {
         await mailer.sendActivationMail(userInput.email, activationToken);
     };
 
+    activate = async (token) => {
+        const hashedActivationToken = crypto.hash(token);
+
+        const user = await prisma.user.findFirst({
+            where: {
+                activationToken: hashedActivationToken
+            },
+            select: {
+                id: true,
+                activationToken: true
+            }
+        });
+
+        if (!user) {
+            throw new CustomError(
+                "User does not exist with with provided Activation Token",
+                404
+            );
+        }
+
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                status: "ACTIVE",
+                activationToken: null
+            }
+        });
+    };
+
     login = async (input) => {
         const user = await prisma.user.findFirst({
             where: {
@@ -80,35 +111,6 @@ class UserService {
 
         return token;
     };
-    activate = async (token) => {
-        const hashedActivationToken = crypto.hash(token);
-        const user = await prisma.user.findFirst({
-            where: {
-                activationToken: hashedActivationToken
-            },
-            select: {
-                id: true,
-                activationToken: true
-            }
-        });
-
-        if (!user) {
-            throw new CustomError(
-                "User does not exist with with provided Activation Token",
-                404
-            );
-        }
-
-        await prisma.user.update({
-            where: {
-                id: user.id
-            },
-            data: {
-                status: "ACTIVE",
-                activationToken: null
-            }
-        });
-    };
 
     forgotPassword = async (email) => {
         const user = await prisma.user.findFirst({
@@ -157,18 +159,13 @@ class UserService {
         });
 
         if (!user) {
-            throw new CustomError(
-                "User does not exist with provided Password Reset Token",
-                404
-            );
+            throw new CustomError("Invalid Token", 401);
         }
         const currentTime = new Date();
-        const takenExpDate = new Date(user.passwordResetTokenExpirationDate);
+        const tokenExpDate = new Date(user.passwordResetTokenExpirationDate);
 
-        if (takenExpDate < currentTime) {
-            throw new CustomError(
-                "Password Reset Token Expired: Request a new one"
-            );
+        if (tokenExpDate < currentTime) {
+            throw new CustomError(" Reset Token Expired", 422);
         }
 
         await prisma.user.update({

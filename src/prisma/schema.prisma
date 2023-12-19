@@ -69,29 +69,28 @@ model User {
 }
 
 type Comment {
-    id        String
-    postId    String?  @db.ObjectId
-    userId    String?  @db.ObjectId
-    createdAt DateTime @default(now())
+    id     String
+    text   String
+    userId String? @db.ObjectId
 }
 
 model Post {
-    id        String         @id @default(auto()) @map("_id") @db.ObjectId
-    content   String
-    comments  Comment[]
-    status    PostVisibility @default(PUBLIC)
-    createdAt DateTime       @default(now())
-    updatedAt DateTime       @updatedAt
-    userId    String?        @db.ObjectId
-    likeCount Int            @default(0)
-    User      User?          @relation(fields: [userId], references: [id])
+    id         String         @id @default(auto()) @map("_id") @db.ObjectId
+    content    String
+    comments   Comment[]
+    visibility PostVisibility @default(PUBLIC)
+    createdAt  DateTime       @default(now())
+    updatedAt  DateTime       @updatedAt
+    userId     String?        @db.ObjectId
+    likeCount  Int            @default(0)
+    user       User?          @relation(fields: [userId], references: [id])
 }
 
 model Like {
-    id       String   @id @default(auto()) @map("_id") @db.ObjectId
-    userId   String?  @db.ObjectId
-    postId   String?  @db.ObjectId
-    likeTime DateTime @default(now())
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String?  @db.ObjectId
+    postId    String?  @db.ObjectId
+    likedTime DateTime @default(now())
 }
 
 model Friendship {
