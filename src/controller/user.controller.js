@@ -4,17 +4,26 @@ import { CustomError } from "../utils/custom.error.js";
 
 class UserController {
     signUp = catchAsync(async (req, res) => {
-        const { body } = req;
+        const {
+            email,
+            firstName,
+            lastName,
+            dateOfBirth,
+            password,
+            currentPlace,
+            education,
+            workExperience
+        } = req.body;
 
         const userInput = {
-            email: body.email,
-            firstName: body.firstName,
-            lastName: body.lastName,
-            dateOfBirth: body.dateOfBirth,
-            password: body.password,
-            currentPlace: body.currentPlace,
-            education: body.education,
-            workExperience: body.workExperience
+            email,
+            password,
+            firstName,
+            lastName,
+            dateOfBirth,
+            currentPlace,
+            education,
+            workExperience
         };
 
         await userService.signUp(userInput);
@@ -23,18 +32,6 @@ class UserController {
         });
     });
 
-    login = catchAsync(async (req, res) => {
-        const { body } = req;
-        const input = {
-            email: body.email,
-            password: body.password
-        };
-
-        const jwt = await userService.login(input);
-        res.status(200).json({
-            token: jwt
-        });
-    });
     activate = catchAsync(async (req, res) => {
         const {
             query: { activationToken }
@@ -51,12 +48,23 @@ class UserController {
         });
     });
 
-    forgotPassword = catchAsync(async (req, res) => {
-        const {
-            body: { email }
-        } = req;
+    login = catchAsync(async (req, res) => {
+        const { body } = req;
+        const input = {
+            email: body.email,
+            password: body.password
+        };
 
-        await userService.forgotPassword(email);
+        const jwt = await userService.login(input);
+        res.status(200).json({
+            token: jwt
+        });
+    });
+
+    forgotPassword = catchAsync(async (req, res) => {
+        const { body } = req;
+
+        await userService.forgotPassword(body.email);
 
         res.status(200).json({
             message: "Password reset email has been sent"
